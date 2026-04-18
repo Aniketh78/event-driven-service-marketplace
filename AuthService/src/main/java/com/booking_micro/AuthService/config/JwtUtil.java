@@ -4,8 +4,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
-
 import javax.crypto.SecretKey;
+
 import java.security.Key;
 import java.util.Date;
 
@@ -26,21 +26,21 @@ public class JwtUtil {
     }
     public String extractEmail(String token){
 
-        return Jwts.parser()
-                .verifyWith(key)
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
                 .build()
-                .parseSignedClaims(token)
-                .getPayload()
+                .parseClaimsJws(token)
+                .getBody()
                 .getSubject();
 
     }
     public String extractRole(String token){
 
-        return Jwts.parser()
-                .verifyWith(key)
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
                 .build()
-                .parseSignedClaims(token)
-                .getPayload()
+                .parseClaimsJws(token)
+                .getBody()
                 .get("role", String.class);
 
     }
