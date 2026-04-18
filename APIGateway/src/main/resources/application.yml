@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: APIGateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: auth
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/**
+          filters:
+            - RewritePath=/auth/(?<segment>.*), /$\{segment}
+
+server:
+  port: 8082
