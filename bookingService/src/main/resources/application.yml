@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: bookingService
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ""
+
+  h2:
+    console:
+      enabled: true
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+
+  kafka:
+    bootstrap-servers: localhost:19092
+#    producer:
+#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.apache.kafka.support.serializer.JsonSerializer
+
+    consumer:
+      group-id: booking-service-group
+
+      properties:
+        spring.json.trusted.packages: "*"
+
+server:
+  port : 8083

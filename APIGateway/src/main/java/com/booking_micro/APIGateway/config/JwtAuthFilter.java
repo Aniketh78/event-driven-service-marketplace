@@ -36,13 +36,14 @@ public class JwtAuthFilter implements GlobalFilter {
         try{
             Claims claims = jwtUtil.validateToken(token);
 
-            String user = claims.getSubject();
+            String user = claims.get("email", String.class);
             String role = (String) claims.get("role");
 
             ServerHttpRequest request = exchange.getRequest()
                     .mutate()
                     .header("X-User-Email", user)
                     .header("X-User-Role", role)
+                    .header("X-User-Id", claims.getSubject())
                     .build();
             return chain.filter(exchange.mutate().request(request).build());
         }

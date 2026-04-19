@@ -11,6 +11,12 @@ spring:
             - Path=/auth/**
           filters:
             - RewritePath=/auth/(?<segment>.*), /$\{segment}
+        - id: booking
+          uri: http://localhost:8083
+          predicates:
+            - Path=/booking/**
+          filters:
+            - RewritePath=/booking/(?<segment>.*), /$\{segment}
 
 server:
   port: 8082

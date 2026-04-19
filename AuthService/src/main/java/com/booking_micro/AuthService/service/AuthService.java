@@ -60,6 +60,6 @@ public class AuthService {
             throw new Exception("Invalid password");
         }
 
-        return jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        return jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
     }
 }
