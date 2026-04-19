@@ -18,7 +18,7 @@ public class KafkaProducerConfig {
         Map<String, Object> props = new HashMap<>();
         props.put("bootstrap.servers", "localhost:19092");
         props.put("key.serializer", StringSerializer.class.getName());
-        props.put("value.serializer", org.springframework.kafka.support.serializer.JacksonJsonSerializer.class.getName());
+        props.put("value.serializer", org.springframework.kafka.support.serializer.JsonSerializer.class.getName());
         return new DefaultKafkaProducerFactory<>(props);
     }
 
