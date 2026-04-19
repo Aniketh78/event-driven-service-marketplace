@@ -1,18 +1,18 @@
 spring:
   application:
-    name: APIGateway
+    name: api-Gateway
 
   cloud:
     gateway:
       routes:
         - id: auth
-          uri: http://localhost:8081
+          uri: lb://AUTH-SERVICE
           predicates:
             - Path=/auth/**
           filters:
             - RewritePath=/auth/(?<segment>.*), /$\{segment}
         - id: booking
-          uri: http://localhost:8083
+          uri: lb://BOOKING-SERVICE
           predicates:
             - Path=/booking/**
           filters:
@@ -20,3 +20,11 @@ spring:
 
 server:
   port: 8082
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+  instance:
+    prefer-ip-address: true
