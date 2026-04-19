@@ -14,8 +14,9 @@ public class JwtUtil {
     private final SecretKey key = Keys.hmacShaKeyFor(key_string.getBytes());
 
     public Claims validateToken(String token) {
-        return Jwts.parser()
+        return Jwts.parserBuilder()
                 .setSigningKey(key)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }

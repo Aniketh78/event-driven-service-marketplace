@@ -23,13 +23,18 @@ public class JwtAuthFilter implements GlobalFilter {
         String path = exchange.getRequest().getURI().getPath();
         System.out.println("path: " + path);
 
-        if(path.startsWith("/api/auth")) {
+        if(path.contains("/auth/")) {
             return chain.filter(exchange);
         }
         String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
 
         if(authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Missing or invalid Authorization header");
+            exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
+            exchange.getResponse().getHeaders().add("Content-Type", "application/json");
+            String error = "{\"error\": \"Missing or invalid Authorization header.\"}";
+            byte[] bytes = error.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            org.springframework.core.io.buffer.DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
+            return exchange.getResponse().writeWith(reactor.core.publisher.Mono.just(buffer));
         }
 
         String token = authHeader.substring(7);
@@ -37,7 +42,16 @@ public class JwtAuthFilter implements GlobalFilter {
             Claims claims = jwtUtil.validateToken(token);
 
             String user = claims.get("email", String.class);
-            String role = (String) claims.get("role");
+            String role = claims.get("role", String.class);
+
+            if (path.contains("/bookings/") && !"USER".equalsIgnoreCase(role)) {
+                exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.FORBIDDEN);
+                exchange.getResponse().getHeaders().add("Content-Type", "application/json");
+                String error = "{\"error\": \"You are not allowed to access this path.\"}";
+                byte[] bytes = error.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                org.springframework.core.io.buffer.DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
+                return exchange.getResponse().writeWith(reactor.core.publisher.Mono.just(buffer));
+            }
 
             ServerHttpRequest request = exchange.getRequest()
                     .mutate()
@@ -48,7 +62,12 @@ public class JwtAuthFilter implements GlobalFilter {
             return chain.filter(exchange.mutate().request(request).build());
         }
         catch(Exception e){
-            throw new RuntimeException("Invalid token");
+            exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
+            exchange.getResponse().getHeaders().add("Content-Type", "application/json");
+            String error = "{\"error\": \"Invalid token.\"}";
+            byte[] bytes = error.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            org.springframework.core.io.buffer.DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
+            return exchange.getResponse().writeWith(reactor.core.publisher.Mono.just(buffer));
         }
     }
 }
