@@ -2,29 +2,10 @@ spring:
   application:
     name: api-Gateway
 
+  config:
+    import: "optional:configserver:"
   cloud:
-    gateway:
-      routes:
-        - id: auth
-          uri: lb://AUTH-SERVICE
-          predicates:
-            - Path=/auth/**
-          filters:
-            - RewritePath=/auth/(?<segment>.*), /$\{segment}
-        - id: booking
-          uri: lb://BOOKING-SERVICE
-          predicates:
-            - Path=/booking/**
-          filters:
-            - RewritePath=/booking/(?<segment>.*), /$\{segment}
-
-server:
-  port: 8082
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-
-  instance:
-    prefer-ip-address: true
+    config:
+      discovery:
+        enabled: true
+        service-id: config-server

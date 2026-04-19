@@ -1,40 +1,10 @@
 spring:
   application:
     name: booking-service
-  datasource:
-    url: jdbc:h2:mem:testdb
-    driverClassName: org.h2.Driver
-    username: sa
-    password: ""
-
-  h2:
-    console:
-      enabled: true
-
-  jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    hibernate:
-      ddl-auto: update
-
-  kafka:
-    bootstrap-servers: localhost:19092
-#    producer:
-#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-#      value-serializer: org.apache.kafka.support.serializer.JsonSerializer
-
-    consumer:
-      group-id: booking-service-group
-
-      properties:
-        spring.json.trusted.packages: "*"
-
-server:
-  port : 8083
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-
-  instance:
-    prefer-ip-address: true
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        service-id: config-server
