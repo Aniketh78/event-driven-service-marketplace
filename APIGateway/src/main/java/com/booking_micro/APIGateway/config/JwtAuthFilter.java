@@ -52,6 +52,14 @@ public class JwtAuthFilter implements GlobalFilter {
                 org.springframework.core.io.buffer.DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
                 return exchange.getResponse().writeWith(reactor.core.publisher.Mono.just(buffer));
             }
+            if (path.contains("/supplier/") && !"SUPPLIER".equalsIgnoreCase(role)) {
+                exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.FORBIDDEN);
+                exchange.getResponse().getHeaders().add("Content-Type", "application/json");
+                String error = "{\"error\": \"You are not allowed to access this path.\"}";
+                byte[] bytes = error.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                org.springframework.core.io.buffer.DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
+                return exchange.getResponse().writeWith(reactor.core.publisher.Mono.just(buffer));
+            }
 
             ServerHttpRequest request = exchange.getRequest()
                     .mutate()

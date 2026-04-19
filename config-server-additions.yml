@@ -1,0 +1,8 @@
+  cloud:
+    gateway:
+      routes:
+        - id: supplier-service
+          uri: lb://supplier-service
+          predicates:
+            - Path=/supplier/**
+
