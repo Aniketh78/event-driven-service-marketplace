@@ -1,45 +1,77 @@
-# Booking Microservices Architecture
+<div align="center">
+
+# Event-Driven Service Marketplace
+
+**A production-grade microservices platform for service booking and supplier management, built with event-driven architecture using Spring Boot, Spring Cloud, and Apache Kafka.**
+
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.3-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0.0-6DB33F?style=for-the-badge&logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud)
+[![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-Latest-231F20?style=for-the-badge&logo=apachekafka&logoColor=white)](https://kafka.apache.org/)
+[![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Spring Security](https://img.shields.io/badge/Spring%20Security-JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)](https://spring.io/projects/spring-security)
+[![Netflix Eureka](https://img.shields.io/badge/Netflix%20Eureka-Service%20Discovery-E50914?style=for-the-badge&logo=netflix&logoColor=white)](https://cloud.spring.io/spring-cloud-netflix/)
+[![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](https://maven.apache.org/)
+[![H2 Database](https://img.shields.io/badge/H2-Database-0000BB?style=for-the-badge&logo=databricks&logoColor=white)](https://www.h2database.com/)
+
+---
+
+</div>
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Services](#services)
+- [Centralized Configuration](#centralized-configuration)
+- [Event-Driven Communication](#event-driven-communication)
+- [API Reference](#api-reference)
+- [Getting Started](#getting-started)
+- [Service Port Map](#service-port-map)
+
+---
 
 ## Overview
 
-The Booking Microservices Architecture is a comprehensive, distributed system built on Spring Boot and Spring Cloud. It handles user authentication, service discovery, centralized configuration, booking management, and supplier-side request handling. Communication between services occurs synchronously via REST/API Gateway routing and asynchronously via Apache Kafka.
+This platform implements a fully distributed microservices architecture designed around service booking and supplier fulfillment. The system follows domain-driven design principles, separating concerns across independently deployable services that communicate through both synchronous REST calls (via a centralized API Gateway) and asynchronous event streaming (via Apache Kafka).
 
-## Features
+Key architectural decisions include:
 
-- **User Authentication & Authorization**: Secure, stateless access using JSON Web Tokens (JWT). Role-based access control enforces business rules for `USER` and `SUPPLIER` roles.
-- **Service Discovery**: Integration with Netflix Eureka allows dynamic scaling, service registration, and intelligent routing.
-- **Centralized Configuration**: Spring Cloud Config is leveraged to manage and version-control application properties across all microservices centrally.
-- **API Gateway Pattern**: Spring Cloud Gateway provides a single entry point for clients, handling dynamic routing, global CORS configuration, and security pre-filtering.
-- **Event-Driven Communication**: Services remain highly decoupled by utilizing Apache Kafka to broadcast state changes asynchronously.
+- **Stateless authentication** through JSON Web Tokens, enforced at the gateway level before requests reach downstream services.
+- **Service discovery** through Netflix Eureka, eliminating hardcoded service locations and enabling horizontal scaling.
+- **Externalized configuration** through Spring Cloud Config Server, pulling versioned property files from a dedicated Git repository.
+- **Asynchronous decoupling** between the Booking and Supplier domains using Kafka topics, ensuring that neither service holds a direct dependency on the other.
 
-## Architecture & Diagrams
+---
 
-### High-Level Architecture Diagram
+## Architecture
+
+### High-Level System Topology
 
 ```mermaid
 graph TD
     Client[Client Applications] -->|HTTP/REST| Gateway(API Gateway)
-    
+
     Gateway -->|Route| Auth[Auth Service]
     Gateway -->|Route| Booking[Booking Service]
     Gateway -->|Route| Supplier[Supplier Service]
-    
-    Auth -.->|Register/Fetch| Registry(Service Registry / Eureka)
-    Booking -.->|Register/Fetch| Registry
-    Supplier -.->|Register/Fetch| Registry
-    Gateway -.->|Register/Fetch| Registry
-    Config[Config Server] -.->|Register/Fetch| Registry
-    
-    Auth -.->|Fetch Config| Config
-    Booking -.->|Fetch Config| Config
-    Supplier -.->|Fetch Config| Config
-    Gateway -.->|Fetch Config| Config
-    
+
+    Auth -.-|Register/Fetch| Registry(Service Registry / Eureka)
+    Booking -.-|Register/Fetch| Registry
+    Supplier -.-|Register/Fetch| Registry
+    Gateway -.-|Register/Fetch| Registry
+    Config[Config Server] -.-|Register/Fetch| Registry
+
+    Auth -.-|Fetch Config| Config
+    Booking -.-|Fetch Config| Config
+    Supplier -.-|Fetch Config| Config
+    Gateway -.-|Fetch Config| Config
+
     Booking -->|Publish Booking Request| Kafka[(Apache Kafka)]
     Kafka -->|Consume Booking Request| Supplier
     Supplier -->|Publish Acceptance| Kafka
     Kafka -->|Consume Acceptance| Booking
-    
+
     Booking -->|Read/Write| BookingDB[(Booking Database)]
     Supplier -->|Read/Write| SupplierDB[(Supplier Database)]
     Auth -->|Read/Write| AuthDB[(Auth Database)]
@@ -68,14 +100,14 @@ graph LR
     end
 ```
 
-### Sequence Diagram: Authentication Flow
+### Authentication Flow
 
 ```mermaid
 sequenceDiagram
     actor Client
     participant Gateway as API Gateway
     participant Auth as Auth Service
-    
+
     Client->>Gateway: POST /auth/login {credentials}
     Gateway->>Auth: Route Request
     Auth->>Auth: Validate Credentials against DB
@@ -83,7 +115,7 @@ sequenceDiagram
     Gateway-->>Client: 200 OK + JWT Token
 ```
 
-### Sequence Diagram: Booking Event Flow
+### Booking Event Flow
 
 ```mermaid
 sequenceDiagram
@@ -92,7 +124,7 @@ sequenceDiagram
     participant BookingServ as Booking Service
     participant MsgBroker as Kafka Topic (booking-topic)
     participant SupplierServ as Supplier Service
-    
+
     User->>Gateway: POST /booking/api/bookings/create
     Note right of Gateway: Validates JWT, Enforces Role=USER
     Gateway->>BookingServ: Route to Booking Service
@@ -100,12 +132,12 @@ sequenceDiagram
     BookingServ-xMsgBroker: Publish Event (BookingData)
     BookingServ-->>Gateway: Return Booking Details
     Gateway-->>User: 200 OK
-    
+
     MsgBroker-->>SupplierServ: Consume Event (Asynchronous)
     SupplierServ->>SupplierServ: Persist Request in Supplier DB
 ```
 
-### Sequence Diagram: Supplier Acceptance Flow
+### Supplier Acceptance Flow
 
 ```mermaid
 sequenceDiagram
@@ -114,7 +146,7 @@ sequenceDiagram
     participant SupplierServ as Supplier Service
     participant MsgBroker as Kafka Topic (acceptance-topic)
     participant BookingServ as Booking Service
-    
+
     Supplier->>Gateway: POST /supplier/api/supplier/accept/{id}
     Note right of Gateway: Validates JWT, Enforces Role=SUPPLIER
     Gateway->>SupplierServ: Route to Supplier Service
@@ -122,102 +154,161 @@ sequenceDiagram
     SupplierServ-xMsgBroker: Publish Event (RequestID, ProviderID)
     SupplierServ-->>Gateway: Confirmation Payload
     Gateway-->>Supplier: 200 OK
-    
+
     MsgBroker-->>BookingServ: Consume Event (Asynchronous)
     BookingServ->>BookingServ: Update Original Booking to ACCEPTED
 ```
 
-## System Components
+---
 
-### 1. Service Registry (Eureka)
-- **Description**: Centralized registry for all microservices in the cluster to register themselves and discover others.
-- **Port**: 8761
-- **Role**: Provides client-side load balancing and resilient routing metadata without hardcoding IPs and ports.
+## Services
 
-### 2. Config Server
-- **Description**: Spring Cloud Config server that centralizes the property files for all the microservices.
-- **Role**: Offers version-controlled configuration management. Services can pull their environment-specific application configuration dynamically upon startup.
+### Service Registry (Eureka)
 
-### 3. API Gateway
-- **Description**: The single entry point to the system for all clients. 
-- **Port**: 8082
-- **Role**: 
-  - Routes traffic to appropriate internal services (Auth, Booking, Supplier).
-  - Performs global security tasks, such as intercepting requests to validate JSON Web Tokens (JWT) using a global `JwtAuthFilter`.
-  - Blocks unauthorized requests before they hit backend services.
+The service registry acts as the backbone of the microservices mesh. Every service in the platform registers itself with Eureka on startup and periodically sends heartbeat signals. Other services query the registry to resolve instance locations at runtime, enabling client-side load balancing and eliminating the need for hardcoded host/port configurations.
 
-### 4. Auth Service
-- **Description**: Responsible for identity management and securing the platform.
-- **Role**: 
-  - Allows registration of different roles (e.g., USER, SUPPLIER).
-  - Authenticates credentials and issues signed JWTs upon successful log-in.
-  - Secures endpoints and enforces role limitations.
+### Config Server
 
-### 5. Booking Service
-- **Description**: The core business capability where clients (USERs) can manage bookings.
-- **Role**: 
-  - Receives booking requests. Creates an initial record internally as `PENDING`.
-  - Acts as a Kafka producer, publishing a message containing booking details into a Kafka topic (`booking-topic`).
-  - Acts as a Kafka consumer, listening for updates from suppliers to mark a booking as `ACCEPTED`.
+The Config Server provides externalized, environment-aware configuration management for every service in the platform. It connects to a remote Git repository to serve versioned property files, ensuring that changes to configuration can be tracked, rolled back, and promoted across environments without redeploying any service.
 
-### 6. Supplier Service
-- **Description**: Handles the supplier side of the business domain. Restricted only to users with the SUPPLIER role.
-- **Role**: 
-  - Consumes messages from the Kafka topic emitted by the Booking Service.
-  - Maintains a local database view of available, pending requests.
-  - Exposes an endpoint (`/see-requests`) to view available requests.
-  - Exposes an endpoint (`/accept/{id}`) allowing a supplier to accept a specific booking.
-  - Upon acceptance, emits an acceptance event via Kafka, which is then processed by the Booking Service to complete the workflow.
+### API Gateway
 
-## Technology Stack
+The API Gateway is the sole entry point for all external client traffic. It performs two critical functions: **routing** incoming requests to the correct internal microservice based on path predicates, and **security enforcement** by intercepting every request through a global `JwtAuthFilter` to validate the bearer token before forwarding traffic downstream. Unauthorized or malformed requests are rejected at this layer, shielding backend services from unauthenticated access.
 
-- **Framework**: Spring Boot 3.x, Spring Cloud
-- **Language**: Java 17+
-- **Message Broker**: Apache Kafka
-- **Database**: H2 (In-Memory) / Spring Data JPA
-- **Security**: Spring Security, JJWT (io.jsonwebtoken)
-- **Containerization**: Docker (Optional)
+### Auth Service
 
-## API Reference (Summary)
+The Auth Service is responsible for identity management across the platform. It handles user registration (supporting `USER` and `SUPPLIER` roles), credential validation, and JWT issuance. All tokens are signed with HMAC-SHA and carry role claims, which the API Gateway inspects on every subsequent request to enforce role-based access control.
+
+### Booking Service
+
+The Booking Service encapsulates the core booking domain. When a user places a booking, the service persists it with a `PENDING` status and publishes an event to the `booking-topic` Kafka topic. It also acts as a consumer on the `acceptance-topic`, listening for supplier acceptance events to update the booking status to `ACCEPTED` and record the assigned supplier.
+
+### Supplier Service
+
+The Supplier Service manages the supplier-facing workflow. It consumes booking events from Kafka, maintains a local view of pending requests, and exposes endpoints for suppliers to view and accept those requests. Upon acceptance, it publishes an event to the `acceptance-topic`, completing the asynchronous handshake with the Booking Service.
+
+---
+
+## Centralized Configuration
+
+All application property files for every microservice in this platform are stored and version-controlled in a dedicated external repository:
+
+**[service-marketplace-centralized-config](https://github.com/Aniketh78/service-marketplace-centralized-config)**
+
+The Spring Cloud Config Server in this project connects to that repository at startup and serves the appropriate configuration to each microservice based on the application name specified in their `bootstrap.yml` or `application.yml`. This separation ensures that:
+
+- Configuration changes do not require code changes or redeployment of services.
+- Environment-specific properties (dev, staging, production) can be managed through Git branching or profile-based naming conventions.
+- Sensitive values can be managed independently from the application source code.
+
+---
+
+## Event-Driven Communication
+
+The platform uses Apache Kafka as its asynchronous messaging backbone, enabling loose coupling between the Booking and Supplier bounded contexts. The event flow follows a well-defined lifecycle:
+
+| Step | Actor | Action | Kafka Topic |
+|------|-------|--------|-------------|
+| 1 | User | Places a booking through the API Gateway | -- |
+| 2 | Booking Service | Persists booking as `PENDING`, publishes event | `booking-topic` |
+| 3 | Supplier Service | Consumes the event, stores the pending request locally | `booking-topic` |
+| 4 | Supplier | Views pending requests and accepts one | -- |
+| 5 | Supplier Service | Updates local status, publishes acceptance event | `acceptance-topic` |
+| 6 | Booking Service | Consumes the acceptance, updates booking to `ACCEPTED` | `acceptance-topic` |
+
+This choreography-based saga pattern ensures that neither the Booking nor Supplier service holds a synchronous dependency on the other, improving fault tolerance and enabling independent scaling.
+
+---
+
+## API Reference
 
 ### Authentication
-- `POST /auth/register` - Register a new user (`ROLE_USER` or `ROLE_SUPPLIER`).
-- `POST /auth/login` - Authenticate and retrieve a JWT token.
 
-### Bookings (USER only)
-- `POST /booking/api/bookings/create` - Create a new booking.
-- `GET /booking/api/bookings/my-bookings` - Retrieve all bookings associated with the authenticated user.
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| `POST` | `/auth/register` | Register a new user with role `ROLE_USER` or `ROLE_SUPPLIER` | Public |
+| `POST` | `/auth/login` | Authenticate credentials and receive a signed JWT | Public |
 
-### Suppliers (SUPPLIER only)
-- `GET /supplier/api/supplier/see-requests` - View all pending booking requests published to the network.
-- `POST /supplier/api/supplier/accept/{id}` - Accept a generated request.
+### Bookings
 
-## Asynchronous Communication Flow
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| `POST` | `/booking/api/bookings/create` | Create a new booking request | `ROLE_USER` |
+| `GET` | `/booking/api/bookings/my-bookings` | Retrieve all bookings for the authenticated user | `ROLE_USER` |
 
-1. **Placing a Booking**: A user accesses the Booking Service through the API Gateway, initiating a new booking. The Booking service stores this as `PENDING` and publishes an asynchronous event to an Apache Kafka topic.
-2. **Supplier Notification**: The Supplier Service consumes the Kafka event and records the pending request in its own data store.
-3. **Accepting a Request**: A supplier queries their service to find `PENDING` requests. When they accept a request, the Supplier Service updates its internal status and publishes an accepted event to Kafka holding both the booking ID and supplier ID.
-4. **Finalizing the Booking**: The Booking Service receives the acceptance event from Kafka and updates the original booking record, permanently binding it to the assigned supplier and marking the status as `ACCEPTED`.
+### Supplier Operations
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| `GET` | `/supplier/api/supplier/see-requests` | List all pending booking requests | `ROLE_SUPPLIER` |
+| `POST` | `/supplier/api/supplier/accept/{id}` | Accept a specific pending request | `ROLE_SUPPLIER` |
+
+> All endpoints except authentication routes require a valid JWT in the `Authorization` header prefixed with `Bearer`.
+
+---
 
 ## Getting Started
 
 ### Prerequisites
-- JDK 17 or higher
-- Apache Maven
-- Apache Kafka & Zookeeper (local or containerized)
-- A preferred RDBMS or in-memory DB instances (e.g., PostgreSQL, H2)
 
-### Starting the Infrastructure
-1. Ensure Docker is running.
-2. Build the Docker images for all services using Google Jib. In each service directory (e.g., `APIGateway`, `AuthService`, etc.), run:
-   ```bash
-   mvn clean compile jib:dockerBuild
-   ```
-3. Navigate to the `docker/` directory:
-   ```bash
-   cd docker
-   docker-compose up -d
-   ```
-4. The `docker-compose.yml` will intelligently start Kafka and Zookeeper first, followed by the Service Registry, Config Server, and the remaining microservices.
+- **JDK 21** or higher
+- **Apache Maven** 3.8+
+- **Docker** and **Docker Compose**
 
-Once all services exhibit a running state and have successfully registered themselves with Eureka on port 8761, the platform is ready for traffic. All client interactions should securely pass via the API Gateway over port 8082, authenticated by tokens generated by the Auth Service.
+### Build and Deploy
+
+**1. Clone the repository**
+
+```bash
+git clone https://github.com/Aniketh78/event-driven-service-marketplace.git
+cd event-driven-service-marketplace
+```
+
+**2. Build Docker images for each service using Google Jib**
+
+Run the following command inside each service directory (`APIGateway`, `AuthService`, `bookingService`, `SupplierService`, `config-server`, `service_registry`):
+
+```bash
+mvn clean compile jib:dockerBuild
+```
+
+**3. Start the infrastructure**
+
+```bash
+cd docker
+docker-compose up -d
+```
+
+The Docker Compose configuration enforces a strict startup order using health checks:
+
+1. **Zookeeper** starts first and exposes port `19092`.
+2. **Kafka** waits for a healthy Zookeeper before starting on port `9092`.
+3. **Service Registry** starts independently on port `8761`.
+4. **Config Server** waits for the Service Registry, then starts on port `8888`.
+5. **API Gateway**, **Auth Service**, **Booking Service**, and **Supplier Service** wait for both the Config Server and Service Registry to be available before starting.
+
+**4. Verify**
+
+Once all containers are running, navigate to `http://localhost:8761` to confirm that all services have registered with Eureka. All client-facing traffic should be routed through the API Gateway at `http://localhost:8082`.
+
+---
+
+## Service Port Map
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Service Registry (Eureka) | `8761` | Service discovery and registration dashboard |
+| Config Server | `8888` | Centralized configuration provider |
+| API Gateway | `8082` | Single entry point for all client requests |
+| Auth Service | `8081` | Authentication and JWT issuance |
+| Booking Service | `8083` | Booking creation and lifecycle management |
+| Supplier Service | `8084` | Supplier request viewing and acceptance |
+| Apache Kafka | `9092` | Message broker for async communication |
+| Zookeeper | `19092` | Kafka cluster coordination |
+
+---
+
+<div align="center">
+
+
+</div>
