@@ -1,0 +1,14 @@
+{
+  "changeset_id": "1777627594606",
+  "timestamp": 1777627594.606439,
+  "timestamp_human": "2026-05-01 14:56:34",
+  "files": [
+    {
+      "path": "SupplierService\\src\\main\\java\\com\\booking_micro\\SupplierService\\consumer\\BookingConsumer.java",
+      "full_path": "D:\\booking-microservice\\SupplierService\\src\\main\\java\\com\\booking_micro\\SupplierService\\consumer\\BookingConsumer.java",
+      "safe_name": "SupplierService__src__main__java__com__booking_micro__SupplierService__consumer__BookingConsumer.java",
+      "was_new": false,
+      "had_backup": true
+    }
+  ]
+}

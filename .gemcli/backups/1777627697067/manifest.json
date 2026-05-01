@@ -1,0 +1,14 @@
+{
+  "changeset_id": "1777627697067",
+  "timestamp": 1777627697.0688288,
+  "timestamp_human": "2026-05-01 14:58:17",
+  "files": [
+    {
+      "path": "SupplierService\\src\\main\\java\\com\\booking_micro\\SupplierService\\repository\\BookingRequestRepository.java",
+      "full_path": "D:\\booking-microservice\\SupplierService\\src\\main\\java\\com\\booking_micro\\SupplierService\\repository\\BookingRequestRepository.java",
+      "safe_name": "SupplierService__src__main__java__com__booking_micro__SupplierService__repository__BookingRequestRepository.java",
+      "was_new": false,
+      "had_backup": true
+    }
+  ]
+}
