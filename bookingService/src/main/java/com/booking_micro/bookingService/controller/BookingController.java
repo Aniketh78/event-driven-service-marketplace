@@ -6,7 +6,6 @@ import com.booking_micro.bookingService.entity.Booking;
 import com.booking_micro.bookingService.service.BookingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,6 +35,15 @@ public class BookingController {
         return ResponseEntity.ok(ResponseDto.<List<Booking>>builder()
                 .statusCode(HttpStatus.OK.value())
                 .body(bookings)
+                .build());
+    }
+
+    @PostMapping("/cancel/{id}")
+    public ResponseEntity<ResponseDto<String>> cancelBooking(@PathVariable Long id){
+        String result = bookingService.cancelBooking(id);
+        return ResponseEntity.ok(ResponseDto.<String>builder()
+                .statusCode(HttpStatus.OK.value())
+                .body(result)
                 .build());
     }
 }
